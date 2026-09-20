@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Egardesu — Pixel Art Designer</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+</head>
+<body>
+  <canvas id="pixelGrid" aria-hidden="true"></canvas>
+
+  <header class="nav">
+    <div class="container nav-inner">
+      <a href="#home" class="logo">EGAR<span>DESU</span></a>
+      <nav class="nav-links">
+        <a href="#works">STAGES</a>
+        <a href="#about">PLAYER</a>
+        <a href="#services">SKILL TREE</a>
+        <a href="#contact" class="btn btn-outline pixel-btn">CONTACT</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <section id="home" class="hero">
+    <div class="start-screen" id="startScreen">
+      <div class="start-panel">
+        <p class="start-sub">★ INSERT COIN ★</p>
+        <h1 class="start-title">EGARDESU</h1>
+        <p class="start-desc">PIXEL ART &amp; GAME DESIGNER<br>TEKAN ENTER UNTUK MULAI</p>
+        <button class="btn btn-primary pixel-btn btn-lg" id="startBtn">▶ START</button>
+      </div>
+    </div>
+
+    <div class="hud" id="hud">
+      <div class="hud-item">SCORE <span id="scoreEl">000000</span></div>
+      <div class="hud-item">TIME <span id="timeEl">00:00</span></div>
+      <div class="hud-item hud-danger">HP <span id="hpEl">♥♥♥</span></div>
+    </div>
+
+    <div class="container hero-inner" id="heroContent">
+      <div class="hero-copy">
+        <p class="hero-tag">&gt; EGARDESU.DESIGNER.GAME 01</p>
+        <h1 class="hero-title">WELCOME TO<br><span>MY PORTFOLIO</span></h1>
+        <p class="hero-sub">Saya membuat pixel art, karakter, dan visual game yang menghidupkan imajinasi — untuk game, brand, dan cerita.</p>
+        <div class="hero-actions">
+          <a href="#works" class="btn btn-primary pixel-btn">▶ MAIN &nbsp;LEVEL 01</a>
+          <a href="#about" class="btn btn-ghost pixel-link">INFO PLAYER ▸</a>
+        </div>
+        <p class="hero-hint">[KLIK] / [SPASI] : TERBANG &nbsp;&nbsp;•&nbsp;&nbsp; [R] : MULAI ULANG &nbsp;&nbsp;•&nbsp;&nbsp; ♥ = 3 NYAWA</p>
+      </div>
+      <div class="game-frame">
+        <div class="game-tag">FLAPPY 3D V1.0</div>
+        <div id="hero3d"></div>
+        <div class="game-hint">KLIK / SPASI = TERBANG</div>
+      </div>
+    </div>
+  </section>
+
+<section id="works" class="works">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">[ CONTENT MODES ]</p>
+          <h2 class="section-title">NICHE <span>SOCIAL MEDIA</span></h2>
+        </div>
+        <p class="section-desc">7 bidang spesialisasi social media design: setiap niche, satu cerita klien — pilih dan lihat hasilnya.</p>
+      </div>
+
+      <div class="grid-filters">
+        <button class="filter active" data-filter="all">SEMUA</button>
+        <button class="filter" data-filter="fnb">FOOD &amp; BEV</button>
+        <button class="filter" data-filter="travel">TRAVEL</button>
+        <button class="filter" data-filter="school">SCHOOL</button>
+        <button class="filter" data-filter="services">SERVICES</button>
+        <button class="filter" data-filter="apparel">APPAREL</button>
+        <button class="filter" data-filter="print">PRINTING</button>
+        <button class="filter" data-filter="gamestore">GAME STORE</button>
+      </div>
+
+      <div class="works-grid" id="worksGrid">
+        <figure class="work-card card-pixel" data-cat="fnb">
+          <div class="work-thumb">
+            <div class="sprite" data-sprite="food"></div>
+            <span class="card-hud">LV.01</span>
+          </div>
+          <figcaption>
+            <p class="card-tag">[ SOCIAL MEDIA DESIGN ]</p>
+            <h3>FOOD AND BEVERAGES</h3>
+            <div class="card-meta"><span>★★★★★</span><span>+120 XP</span></div>
+          </figcaption>
+        </figure>
+
+        <figure class="work-card card-pixel" data-cat="travel">
+          <div class="work-thumb">
+            <div class="sprite" data-sprite="travel"></div>
+            <span class="card-hud">LV.02</span>
+          </div>
+          <figcaption>
+            <p class="card-tag">[ SOCIAL MEDIA DESIGN ]</p>
+            <h3>TRAVEL</h3>
+            <div class="card-meta"><span>★★★★★</span><span>+150 XP</span></div>
+          </figcaption>
+        </figure>
+
+        <figure class="work-card card-pixel" data-cat="school">
+          <div class="work-thumb">
+            <div class="sprite" data-sprite="school"></div>
+            <span class="card-hud">LV.03</span>
+          </div>
+          <figcaption>
+            <p class="card-tag">[ SOCIAL MEDIA DESIGN ]</p>
+            <h3>SCHOOL AND LEARNING CLASS</h3>
+            <div class="card-meta"><span>★★★★★</span><span>+100 XP</span></div>
+          </figcaption>
+        </figure>
+
+        <figure class="work-card card-pixel" data-cat="services">
+          <div class="work-thumb">
+            <div class="sprite" data-sprite="services"></div>
+            <span class="card-hud">LV.04</span>
+          </div>
+          <figcaption>
+            <p class="card-tag">[ SOCIAL MEDIA DESIGN ]</p>
+            <h3>SERVICES</h3>
+            <div class="card-meta"><span>★★★★★</span><span>+140 XP</span></div>
+          </figcaption>
+        </figure>
+
+        <figure class="work-card card-pixel" data-cat="apparel">
+          <div class="work-thumb">
+            <div class="sprite" data-sprite="apparel"></div>
+            <span class="card-hud">LV.05</span>
+          </div>
+          <figcaption>
+            <p class="card-tag">[ SOCIAL MEDIA DESIGN ]</p>
+            <h3>APPAREL & CLOTHING</h3>
+            <div class="card-meta"><span>★★★★★</span><span>+110 XP</span></div>
+          </figcaption>
+        </figure>
+
+        <figure class="work-card card-pixel" data-cat="print">
+          <div class="work-thumb">
+            <div class="sprite" data-sprite="printing"></div>
+            <span class="card-hud">LV.06</span>
+          </div>
+          <figcaption>
+            <p class="card-tag">[ SOCIAL MEDIA DESIGN ]</p>
+            <h3>DIGITAL PRINTING</h3>
+            <div class="card-meta"><span>★★★★★</span><span>+90 XP</span></div>
+          </figcaption>
+        </figure>
+
+        <figure class="work-card card-pixel" data-cat="gamestore">
+          <div class="work-thumb">
+            <div class="sprite" data-sprite="gamestore"></div>
+            <span class="card-hud">LV.07</span>
+          </div>
+          <figcaption>
+            <p class="card-tag">[ SOCIAL MEDIA DESIGN ]</p>
+            <h3>GAMESTORE</h3>
+            <div class="card-meta"><span>★★★★★</span><span>+130 XP</span></div>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="about">
+    <div class="container about-grid">
+      <div class="about-visual">
+        <div class="avatar-frame">
+          <div class="sprite sprite-big" data-sprite="avatar"></div>
+        </div>
+        <div class="caption-box">&gt; PLAYER.EGARDESU.IDLE</div>
+      </div>
+      <div class="about-text panel-pixel">
+        <p class="eyebrow">[ PLAYER INFO ]</p>
+        <h2 class="section-title">EGAR <span>DESU</span></h2>
+        <p class="about-bio">Desainer grafis &amp; pixel artist dengan 8+ tahun pengalaman. Spesialis visual game: sprite, logo 8-bit, packaging, dan konten media sosial. Percaya desain yang baik seperti power-up — harus terasa menyenangkan dan berfungsi.</p>
+        <div class="stat-bar">
+          <label>PIXEL ART</label><div class="bar"><div class="fill" style="width:95%"></div></div>
+        </div>
+        <div class="stat-bar">
+          <label>LOGO &amp; BRAND</label><div class="bar"><div class="fill" style="width:90%"></div></div>
+        </div>
+        <div class="stat-bar">
+          <label>UI / GAME UX</label><div class="bar"><div class="fill" style="width:85%"></div></div>
+        </div>
+        <div class="stat-bar">
+          <label>PACKAGING</label><div class="bar"><div class="fill" style="width:80%"></div></div>
+        </div>
+        <div class="power-ups">
+          <span class="power-up">★ 120+ PROYEK</span>
+          <span class="power-up">★ 30+ KLUEN</span>
+          <span class="power-up">★ 8 TAHUN</span>
+        </div>
+        <div class="skills">
+          <span>ASEPRITE</span><span>PHOTOSHOP</span><span>ILUSTRATOR</span><span>FIGMA</span><span>UNITY</span><span>BLENDER</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="services" class="services">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">[ SKILL TREE ]</p>
+          <h2 class="section-title">PILIH <span>SKILL</span></h2>
+        </div>
+        <p class="section-desc">Empat skill utama yang sudah max level. Pilih quest yang cocok dengan kebutuhanmu.</p>
+      </div>
+      <div class="services-grid">
+        <article class="service-card card-pixel">
+          <h3 class="sk-icon">◈</h3>
+          <h4>BRAND IDENTITY</h4>
+          <p>Logo, warna, dan panduan visual ala game universe untuk brand yang tak terlupakan.</p>
+          <span class="sk-status">[ UNLOCKED ]</span>
+        </article>
+        <article class="service-card card-pixel">
+          <h3 class="sk-icon">♥</h3>
+          <h4>SOCIAL MEDIA</h4>
+          <p>Konten pixel, feed, dan campaign chunks yang konsisten dan seru untuk dilihat.</p>
+          <span class="sk-status">[ UNLOCKED ]</span>
+        </article>
+        <article class="service-card card-pixel">
+          <h3 class="sk-icon">⚔</h3>
+          <h4>PRINT &amp; PACKAGING</h4>
+          <p>Poster, box produk, dan material cetak siap produksi — dari screen ke toko.</p>
+          <span class="sk-status">[ UNLOCKED ]</span>
+        </article>
+        <article class="service-card card-pixel">
+          <h3 class="sk-icon">✦</h3>
+          <h4>UI &amp; GAME ART</h4>
+          <p>Sprite, tilemap, dan aset game: dari konsep hingga siap diimport ke engine.</p>
+          <span class="sk-status">[ UNLOCKED ]</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="contact">
+    <div class="container">
+      <p class="eyebrow">[ CONTACT ]</p>
+      <h2 class="section-title">KIRIM <span>QUEST</span></h2>
+      <p class="contact-sub">&gt; Ceritakan misi desainmu — balasan dalam 1–2 hari kerja. High score: konsisten + hemat revisi.</p>
+      <form class="contact-form" id="contactForm">
+        <div class="form-row">
+          <input type="text" name="name" placeholder="NAMA PEMAIN" required>
+          <input type="email" name="email" placeholder="EMAIL" required>
+        </div>
+        <input type="text" name="subject" placeholder="JUDUL QUEST">
+        <textarea name="message" rows="5" placeholder="DESKRIPSI MISI..." required></textarea>
+        <button type="submit" class="btn btn-primary pixel-btn btn-lg">▶ KIRIM PESAN</button>
+        <p class="form-status" id="formStatus"></p>
+      </form>
+      <div class="contact-links">
+        <a href="mailto:halo@egardesu.id">halo@egardesu.id</a>
+        <a href="#" target="_blank">[ ITCH.IO ]</a>
+        <a href="#" target="_blank">[ INSTAGRAM ]</a>
+        <a href="#" target="_blank">[ BEHANCE ]</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <p>© 2026 EGARDESU. ALL RIGHTS RESERVED.</p>
+      <p>MADE WITH ♥ &amp; PIXELS</p>
+    </div>
+  </footer>
+
+  <div class="gallery-modal" id="galleryModal" aria-hidden="true">
+    <div class="gallery-panel panel-pixel">
+      <div class="gallery-head">
+        <div>
+          <p class="eyebrow" id="galCat">[ ... ]</p>
+          <h3 class="gallery-title" id="galTitle">...</h3>
+        </div>
+        <button class="gallery-close" id="galleryClose" aria-label="Tutup">✕</button>
+      </div>
+      <p class="gallery-desc" id="galDesc"></p>
+      <div class="gallery-grid" id="galGrid"></div>
+      <div class="gallery-nav">
+        <button class="filter" id="galPrev">◀ PREV</button>
+        <span class="gal-count" id="galCount">01 / 07</span>
+        <button class="filter" id="galNext">NEXT ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="zoom-modal" id="zoomModal" aria-hidden="true">
+    <div class="zoom-toolbar">
+      <span class="zoom-label" id="zoomLabel">1.0×</span>
+      <button class="zbtn" id="zoomOut" aria-label="Perkecil">−</button>
+      <button class="zbtn" id="zoomIn" aria-label="Perbesar">+</button>
+      <button class="zbtn" id="zoomReset">RESET</button>
+      <span class="zoom-tip">&gt; SERET UNTUK GESER • SCROLL / ± UNTUK ZOOM</span>
+      <button class="zbtn zclose" id="zoomClose" aria-label="Tutup">✕</button>
+    </div>
+    <div class="zoom-canvas" id="zoomCanvas">
+      <div class="zoom-target" id="zoomTarget"></div>
+    </div>
+    <div class="zoom-hud">
+      <button class="filter" id="zoomPrev">◀ PREV</button>
+      <span class="gal-count" id="zoomCount">01 / 06</span>
+      <button class="filter" id="zoomNext">NEXT ▶</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="scene3d.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
