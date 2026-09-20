@@ -193,32 +193,6 @@ document.querySelectorAll(".nav-links a").forEach((link) => {
   link.addEventListener("click", () => navLinks.classList.remove("open"));
 });
 
-/* ---------- Start game ---------- */
-const startScreen = document.getElementById("startScreen");
-const startBtn = document.getElementById("startBtn");
-const timerEl = document.getElementById("timeEl");
-let started = false;
-let seconds = 0;
-
-function startGame() {
-  if (started) return;
-  started = true;
-  document.body.classList.add("playing");
-  startScreen.classList.add("hidden");
-  window.dispatchEvent(new CustomEvent("game-start"));
-  setInterval(() => {
-    seconds++;
-    const m = String(Math.floor(seconds / 60)).padStart(2, "0");
-    const s = String(seconds % 60).padStart(2, "0");
-    timerEl.textContent = `${m}:${s}`;
-  }, 1000);
-}
-
-startBtn.addEventListener("click", startGame);
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !started) startGame();
-});
-
 /* ---------- Works filter ---------- */
 const filters = document.querySelectorAll(".filter");
 const cards = document.querySelectorAll(".work-card");

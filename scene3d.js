@@ -1,13 +1,6 @@
 (function () {
   const wrap = document.getElementById("hero3d");
-  const scoreEl = document.getElementById("scoreEl");
-  const hpEl = document.getElementById("hpEl");
-
   if (!wrap || !window.THREE) return;
-
-  /* =========================================================
-     HELPERS
-  ========================================================= */
 
   function makeCanvas(w, h, draw) {
     const c = document.createElement("canvas");
@@ -16,1924 +9,292 @@
     draw(c.getContext("2d"), w, h);
     return c;
   }
-
-  function tex(canvas) {
-    const t = new THREE.CanvasTexture(canvas);
+  function tex(c) {
+    const t = new THREE.CanvasTexture(c);
     t.magFilter = THREE.NearestFilter;
     t.minFilter = THREE.NearestFilter;
     return t;
   }
-
-  const GMAP = (() => {
-    const c = makeCanvas(4, 1, (ctx) => {
+  const GMAP = (function () {
+    const c = makeCanvas(4, 1, function (ctx) {
       const g = ctx.createLinearGradient(0, 0, 4, 0);
-      g.addColorStop(0, "#000");
-      g.addColorStop(0.5, "#999");
-      g.addColorStop(1, "#fff");
-
+      g.addColorStop(0, "#0d0d0f");
+      g.addColorStop(0.32, "#5a5a5a");
+      g.addColorStop(0.68, "#bfbfbf");
+      g.addColorStop(1, "#ffffff");
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, 4, 1);
     });
-
     const t = new THREE.CanvasTexture(c);
     t.magFilter = THREE.NearestFilter;
     return t;
   })();
-
-  function toon(color) {
-    return new THREE.MeshToonMaterial({
-      color: color || 0xffffff,
-      gradientMap: GMAP
-    });
-  }
-
-  /* =========================================================
-     SCENE
-  ========================================================= */
+  const toon = function (color) {
+    return new THREE.MeshToonMaterial({ color: color, gradientMap: GMAP });
+  };
+  const base = function (color, opts) {
+    return new THREE.MeshBasicMaterial(Object.assign({ color: color }, opts || {}));
+  };
 
   const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  camera.position.set(0, 0.15, 8.5);
+  camera.lookAt(0, 0, 0);
 
-  /*
-     SIDE VIEW
-     X = kiri / kanan
-     Y = atas / bawah
-     Z = depth
-  */
-
-  const camera = new THREE.PerspectiveCamera(
-    48,
-    1,
-    0.1,
-    200
-  );
-
-  camera.position.set(0, 3.2, 18);
-  camera.lookAt(0, 3.2, 0);
-
-  const renderer = new THREE.WebGLRenderer({
-    antialias: true,
-    alpha: true
-  });
-
-  renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio || 1, 2)
-  );
-
-  if ("outputColorSpace" in renderer) {
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-  }
-
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(1);
   wrap.appendChild(renderer.domElement);
 
-  /* LIGHT */
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x7c3aed, 1.15));
+  const key = new THREE.DirectionalLight(0xfff4e0, 1.05);
+  key.position.set(4, 6, 6);
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0xa78bfa, 0.65);
+  rim.position.set(-5, 2, -4);
+  scene.add(rim);
 
-  scene.add(
-    new THREE.HemisphereLight(
-      0xffffff,
-      0x6e8fbc,
-      1.1
-    )
+  const KIRBY = 0xffa9cf;
+  const KIRBY_D = 0xf28fbd;
+  const KIRBY_L = 0xffc3dc;
+  const EYE = 0x101012;
+  const BLUSH = 0xf8717a;
+  const ACCENT = 0x7c3aed;
+  const ACCENT_L = 0xa78bfa;
+
+  const hero = new THREE.Group();
+
+  /* ---------- body (Kirby ball) ---------- */
+  const R = 0.98;
+  const body = new THREE.Mesh(new THREE.SphereGeometry(R, 40, 28), toon(KIRBY));
+  hero.add(body);
+
+  /* soft top shine */
+  const shineTex = tex(
+    makeCanvas(64, 64, function (ctx) {
+      const g = ctx.createRadialGradient(32, 32, 4, 32, 32, 30);
+      g.addColorStop(0, "rgba(255,235,245,0.8)");
+      g.addColorStop(1, "rgba(255,235,245,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 64, 64);
+    })
   );
-
-  const sunLight = new THREE.DirectionalLight(
-    0xfff4dc,
-    1.4
+  const shine = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.7, 0.7),
+    base(0xffffff, { map: shineTex, transparent: true, depthWrite: false })
   );
+  shine.position.set(-0.28, 0.4, R + 0.02);
+  hero.add(shine);
 
-  sunLight.position.set(
-    -5,
-    10,
-    10
-  );
+  /* ---------- feet (ovals) ---------- */
+  const footGeo = new THREE.SphereGeometry(0.24, 18, 14);
+  const footL = new THREE.Mesh(footGeo, toon(KIRBY_D));
+  footL.scale.set(1.15, 0.42, 1.6);
+  footL.position.set(-0.26, -0.84, 0.24);
+  footL.rotation.z = -0.35;
+  const footR = footL.clone();
+  footR.scale.set(1.15, 0.42, 1.6);
+  footR.position.set(0.26, -0.84, 0.24);
+  footR.rotation.z = 0.35;
+  hero.add(footL, footR);
 
-  scene.add(sunLight);
+  /* ---------- arms (nub) ---------- */
+  const armGeo = new THREE.SphereGeometry(0.26, 18, 14);
+  const armL = new THREE.Mesh(armGeo, toon(KIRBY));
+  armL.scale.set(0.75, 0.95, 0.8);
+  armL.position.set(-0.98, 0.16, 0.08);
+  armL.rotation.z = 0.25;
+  const armR = armL.clone();
+  armR.position.set(0.98, 0.16, 0.08);
+  armR.rotation.z = -0.25;
+  hero.add(armL, armR);
 
-  scene.add(
-    new THREE.AmbientLight(
-      0xffffff,
-      0.25
-    )
-  );
+  /* ---------- face ---------- */
+  const faceZ = R + 0.02;
 
-  /* =========================================================
-     SKY
-  ========================================================= */
+  function makeEye(side) {
+    const g = new THREE.Group();
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.26, 20, 16), toon(EYE));
+    eye.scale.set(0.55, 0.68, 0.35);
+    g.add(eye);
+    const glint = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), toon(0xffffff));
+    glint.position.set(-0.06, 0.08, 0.1);
+    g.add(glint);
+    const glint2 = new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 6), toon(0xffffff));
+    glint2.position.set(0.05, -0.05, 0.11);
+    g.add(glint2);
+    g.position.set(side * 0.27, 0.17, faceZ);
+    g.rotation.z = side * -0.14;
+    return g;
+  }
+  const eyeL = makeEye(-1);
+  const eyeR = makeEye(1);
+  hero.add(eyeL, eyeR);
+  const blinkEyes = [eyeL, eyeR];
 
-  const skyCanvas = makeCanvas(256, 256, (ctx, w, h) => {
-    const g = ctx.createLinearGradient(
-      0,
-      0,
-      0,
-      h
-    );
+  /* blush: diagonal orange bars */
+  const blushMat = toon(BLUSH);
+  const blushGeo = new THREE.BoxGeometry(0.22, 0.07, 0.02);
+  const blushL = new THREE.Mesh(blushGeo, blushMat);
+  blushL.position.set(-0.52, -0.04, faceZ);
+  blushL.rotation.z = -0.5;
+  const blushR = new THREE.Mesh(blushGeo, blushMat);
+  blushR.position.set(0.52, -0.04, faceZ);
+  blushR.rotation.z = 0.5;
+  hero.add(blushL, blushR);
 
-    g.addColorStop(0, "#63bdf1");
-    g.addColorStop(0.35, "#9edbfa");
-    g.addColorStop(0.7, "#d8effc");
-    g.addColorStop(1, "#ffffff");
-
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
-
-    /* sun */
-
-    ctx.fillStyle = "#ffe27a";
-    ctx.beginPath();
-    ctx.arc(
-      205,
-      48,
-      25,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-
-    ctx.strokeStyle = "#ffd45c";
+  /* tiny smile */
+  const mouthTex = makeCanvas(48, 24, function (ctx) {
+    ctx.strokeStyle = "#c25570";
     ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.arc(24, 14, 12, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
+  });
+  const mouth = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.2, 0.1),
+    base(0xffffff, { map: tex(mouthTex), transparent: true, depthWrite: false })
+  );
+  mouth.position.set(0, -0.28, faceZ);
+  hero.add(mouth);
 
-    for (let i = 0; i < 12; i++) {
-      const a =
-        (i / 12) *
-        Math.PI *
-        2;
+  hero.position.y = 0.55;
+  scene.add(hero);
 
-      ctx.beginPath();
-
-      ctx.moveTo(
-        205 + Math.cos(a) * 34,
-        48 + Math.sin(a) * 34
-      );
-
-      ctx.lineTo(
-        205 + Math.cos(a) * 46,
-        48 + Math.sin(a) * 46
-      );
-
-      ctx.stroke();
+  /* ---------- purple star (brand accent) ---------- */
+  function starGeo(outer, inner, points) {
+    const shape = new THREE.Shape();
+    for (let i = 0; i < points * 2; i++) {
+      const r = i % 2 === 0 ? outer : inner;
+      const a = (i / (points * 2)) * Math.PI * 2 - Math.PI / 2;
+      const px = Math.cos(a) * r;
+      const py = Math.sin(a) * r;
+      if (i === 0) shape.moveTo(px, py);
+      else shape.lineTo(px, py);
     }
+    shape.closePath();
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.1, bevelEnabled: false });
+    geo.center();
+    return geo;
+  }
+  const starMat = toon(ACCENT);
+  const starBig = new THREE.Mesh(starGeo(0.26, 0.11, 5), starMat);
+  starBig.position.set(1.4, 0.75, 0.5);
+  scene.add(starBig);
+  const starSmall = new THREE.Mesh(starGeo(0.16, 0.07, 5), toon(ACCENT_L));
+  starSmall.position.set(-1.5, 1.05, -0.1);
+  scene.add(starSmall);
+
+  /* shadow */
+  const shadowTex = tex(
+    makeCanvas(128, 128, function (ctx) {
+      const g = ctx.createRadialGradient(64, 64, 8, 64, 64, 62);
+      g.addColorStop(0, "rgba(18,8,31,0.5)");
+      g.addColorStop(1, "rgba(18,8,31,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 128, 128);
+    })
+  );
+  const shadow = new THREE.Mesh(
+    new THREE.PlaneGeometry(3, 3),
+    base(0xffffff, { map: shadowTex, transparent: true, depthWrite: false })
+  );
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.set(0, -1.05, 0);
+  scene.add(shadow);
+
+  /* sparkles */
+  const sparkMat = base(0xffffff, { transparent: true, opacity: 0.6, depthWrite: false });
+  const sparkles = [];
+  for (let i = 0; i < 20; i++) {
+    const m = new THREE.Mesh(new THREE.IcosahedronGeometry(0.04, 0), sparkMat);
+    m.position.set((Math.random() - 0.5) * 4.6, -0.2 + Math.random() * 3.6, (Math.random() - 0.5) * 3);
+    sparkles.push(m);
+    scene.add(m);
+  }
+
+  /* ---------- interaction ---------- */
+  const target = { x: 0, y: 0 };
+  const look = { yaw: 0, pitch: 0 };
+  let reaction = 0;
+  let blinkAt = 2.5 + Math.random() * 2;
+  let blinkT = 0;
+
+  window.addEventListener("mousemove", function (e) {
+    target.x = (e.clientX / window.innerWidth) * 2 - 1;
+    target.y = -(e.clientY / window.innerHeight) * 2 + 1;
   });
 
-  const sky = new THREE.Mesh(
-    new THREE.SphereGeometry(
-      70,
-      20,
-      16
-    ),
-    new THREE.MeshBasicMaterial({
-      map: tex(skyCanvas),
-      side: THREE.BackSide
-    })
-  );
-
-  scene.add(sky);
-
-  /* =========================================================
-     CLOUDS
-  ========================================================= */
-
-  const cloudCanvas = makeCanvas(
-    128,
-    60,
-    (ctx) => {
-      ctx.clearRect(
-        0,
-        0,
-        128,
-        60
-      );
-
-      ctx.fillStyle = "#ffffff";
-
-      ctx.beginPath();
-
-      ctx.arc(25, 38, 15, 0, Math.PI * 2);
-      ctx.arc(45, 27, 21, 0, Math.PI * 2);
-      ctx.arc(70, 35, 17, 0, Math.PI * 2);
-      ctx.arc(92, 39, 13, 0, Math.PI * 2);
-
-      ctx.fill();
-    }
-  );
-
-  const cloudTexture = tex(cloudCanvas);
-
-  const clouds = [];
-
-  for (let i = 0; i < 8; i++) {
-    const cloud = new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        4.5 + Math.random() * 2,
-        1.8 + Math.random()
-      ),
-      new THREE.MeshBasicMaterial({
-        map: cloudTexture,
-        transparent: true,
-        opacity: 0.9,
-        depthWrite: false
-      })
-    );
-
-    cloud.position.set(
-      -16 + Math.random() * 32,
-      5.2 + Math.random() * 3.5,
-      -7 - Math.random() * 4
-    );
-
-    cloud.userData.speed =
-      0.35 + Math.random() * 0.45;
-
-    scene.add(cloud);
-    clouds.push(cloud);
-  }
-
-  /* =========================================================
-     DISTANT MOUNTAINS
-  ========================================================= */
-
-  const mountains = new THREE.Group();
-
-  function addMountain(
-    x,
-    y,
-    scale,
-    color,
-    z
-  ) {
-    const mountain = new THREE.Mesh(
-      new THREE.ConeGeometry(
-        3 * scale,
-        5 * scale,
-        5
-      ),
-      toon(color)
-    );
-
-    mountain.position.set(
-      x,
-      y,
-      z
-    );
-
-    mountain.rotation.y =
-      Math.PI / 5;
-
-    mountains.add(mountain);
-  }
-
-  addMountain(
-    -13,
-    0.5,
-    2.5,
-    0x9bc4bd,
-    -6
-  );
-
-  addMountain(
-    -7,
-    0.5,
-    3,
-    0x88b7ae,
-    -6
-  );
-
-  addMountain(
-    0,
-    0.5,
-    2.3,
-    0x9bc4bd,
-    -6
-  );
-
-  addMountain(
-    7,
-    0.5,
-    3.2,
-    0x82afa8,
-    -6
-  );
-
-  addMountain(
-    14,
-    0.5,
-    2.5,
-    0x9bc4bd,
-    -6
-  );
-
-  scene.add(mountains);
-
-  /* =========================================================
-     GROUND
-  ========================================================= */
-
-  const grassCanvas = makeCanvas(
-    128,
-    128,
-    (ctx) => {
-      ctx.fillStyle = "#72c95d";
-      ctx.fillRect(
-        0,
-        0,
-        128,
-        128
-      );
-
-      for (let i = 0; i < 800; i++) {
-        ctx.fillStyle =
-          Math.random() > 0.5
-            ? "#8ed875"
-            : "#61b94e";
-
-        const x =
-          Math.random() * 128;
-
-        const y =
-          Math.random() * 128;
-
-        ctx.fillRect(
-          x,
-          y,
-          2,
-          2
-        );
-      }
-    }
-  );
-
-  const grassTexture = tex(
-    grassCanvas
-  );
-
-  grassTexture.wrapS =
-    THREE.RepeatWrapping;
-
-  grassTexture.wrapT =
-    THREE.RepeatWrapping;
-
-  grassTexture.repeat.set(
-    12,
-    4
-  );
-
-  const ground = new THREE.Mesh(
-    new THREE.BoxGeometry(
-      42,
-      3,
-      12
-    ),
-    toon(0x63b952)
-  );
-
-  ground.position.set(
-    0,
-    -1.5,
-    0
-  );
-
-  scene.add(ground);
-
-  const grassTop = new THREE.Mesh(
-    new THREE.PlaneGeometry(
-      42,
-      12
-    ),
-    new THREE.MeshBasicMaterial({
-      map: grassTexture
-    })
-  );
-
-  grassTop.rotation.x =
-    -Math.PI / 2;
-
-  grassTop.position.y =
-    0.02;
-
-  scene.add(grassTop);
-
-  /* =========================================================
-     FLOWERS / DECORATION
-  ========================================================= */
-
-  const decoration = new THREE.Group();
-
-  for (let i = 0; i < 24; i++) {
-    const stem = new THREE.Mesh(
-      new THREE.CylinderGeometry(
-        0.025,
-        0.025,
-        0.35,
-        5
-      ),
-      toon(0x3e9c45)
-    );
-
-    const flower = new THREE.Mesh(
-      new THREE.SphereGeometry(
-        0.09,
-        6,
-        6
-      ),
-      toon(
-        i % 2 === 0
-          ? 0xff9acb
-          : 0xffe27a
-      )
-    );
-
-    const x =
-      -20 + Math.random() * 40;
-
-    stem.position.set(
-      x,
-      0.18,
-      1 + Math.random() * 2
-    );
-
-    flower.position.set(
-      x,
-      0.4,
-      stem.position.z
-    );
-
-    decoration.add(
-      stem,
-      flower
-    );
-  }
-
-  scene.add(decoration);
-
-  /* =========================================================
-     ANIME BIRD
-     SIDE VIEW
-  ========================================================= */
-
-  const bird = new THREE.Group();
-
-  /* BODY */
-
-  const body = new THREE.Mesh(
-    new THREE.SphereGeometry(
-      0.58,
-      12,
-      10
-    ),
-    toon(0xfff1df)
-  );
-
-  body.scale.set(
-    1.25,
-    0.9,
-    0.95
-  );
-
-  bird.add(body);
-
-  /* BELLY */
-
-  const belly = new THREE.Mesh(
-    new THREE.SphereGeometry(
-      0.43,
-      12,
-      10
-    ),
-    toon(0xfffaf2)
-  );
-
-  belly.scale.set(
-    1.05,
-    0.85,
-    0.5
-  );
-
-  belly.position.set(
-    0.12,
-    -0.13,
-    0.48
-  );
-
-  bird.add(belly);
-
-  /* FACE */
-
-  const faceCanvas = makeCanvas(
-    256,
-    128,
-    (ctx) => {
-      ctx.clearRect(
-        0,
-        0,
-        256,
-        128
-      );
-
-      function drawEye(x, y) {
-        /* white eye */
-
-        ctx.fillStyle = "#ffffff";
-
-        ctx.beginPath();
-
-        ctx.ellipse(
-          x,
-          y,
-          28,
-          34,
-          0,
-          0,
-          Math.PI * 2
-        );
-
-        ctx.fill();
-
-        /* iris */
-
-        const g =
-          ctx.createLinearGradient(
-            0,
-            y - 30,
-            0,
-            y + 30
-          );
-
-        g.addColorStop(
-          0,
-          "#d8a4ff"
-        );
-
-        g.addColorStop(
-          0.55,
-          "#8d45e8"
-        );
-
-        g.addColorStop(
-          1,
-          "#4b197d"
-        );
-
-        ctx.fillStyle = g;
-
-        ctx.beginPath();
-
-        ctx.ellipse(
-          x,
-          y + 5,
-          19,
-          24,
-          0,
-          0,
-          Math.PI * 2
-        );
-
-        ctx.fill();
-
-        /* pupil */
-
-        ctx.fillStyle =
-          "#281038";
-
-        ctx.beginPath();
-
-        ctx.ellipse(
-          x,
-          y + 7,
-          9,
-          14,
-          0,
-          0,
-          Math.PI * 2
-        );
-
-        ctx.fill();
-
-        /* sparkle */
-
-        ctx.fillStyle =
-          "#ffffff";
-
-        ctx.beginPath();
-
-        ctx.arc(
-          x - 7,
-          y - 6,
-          7,
-          0,
-          Math.PI * 2
-        );
-
-        ctx.fill();
-
-        ctx.beginPath();
-
-        ctx.arc(
-          x + 7,
-          y + 9,
-          3,
-          0,
-          Math.PI * 2
-        );
-
-        ctx.fill();
-
-        /* eyebrow */
-
-        ctx.strokeStyle =
-          "#542441";
-
-        ctx.lineWidth = 4;
-
-        ctx.beginPath();
-
-        ctx.arc(
-          x,
-          y - 32,
-          27,
-          Math.PI * 1.1,
-          Math.PI * 1.9
-        );
-
-        ctx.stroke();
-      }
-
-      /*
-        Side-facing anime face:
-        satu mata besar dominan,
-        satu mata lebih kecil di belakang.
-      */
-
-      drawEye(
-        78,
-        61
-      );
-
-      drawEye(
-        178,
-        61
-      );
-
-      /* blush */
-
-      ctx.fillStyle =
-        "rgba(255,145,190,0.65)";
-
-      ctx.beginPath();
-
-      ctx.ellipse(
-        43,
-        103,
-        20,
-        9,
-        0,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.ellipse(
-        214,
-        103,
-        20,
-        9,
-        0,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.fill();
-    }
-  );
-
-  const face = new THREE.Mesh(
-    new THREE.PlaneGeometry(
-      0.92,
-      0.48
-    ),
-    new THREE.MeshBasicMaterial({
-      map: tex(faceCanvas),
-      transparent: true,
-      depthWrite: false
-    })
-  );
-
-  /*
-     Face ditempatkan di sisi depan
-     kamera sehingga tetap terlihat.
-  */
-
-  face.position.set(
-    0.08,
-    0.05,
-    0.57
-  );
-
-  bird.add(face);
-
-  /* BEAK - menghadap kanan */
-
-  const beakTop = new THREE.Mesh(
-    new THREE.ConeGeometry(
-      0.16,
-      0.48,
-      4
-    ),
-    toon(0xffa94d)
-  );
-
-  beakTop.rotation.z =
-    -Math.PI / 2;
-
-  beakTop.position.set(
-    0.76,
-    -0.02,
-    0.35
-  );
-
-  bird.add(beakTop);
-
-  const beakBottom = new THREE.Mesh(
-    new THREE.ConeGeometry(
-      0.11,
-      0.35,
-      4
-    ),
-    toon(0xff8c32)
-  );
-
-  beakBottom.rotation.z =
-    -Math.PI / 2;
-
-  beakBottom.position.set(
-    0.79,
-    -0.15,
-    0.35
-  );
-
-  bird.add(beakBottom);
-
-  /* CREST */
-
-  const crest = new THREE.Group();
-
-  for (let i = 0; i < 3; i++) {
-    const feather =
-      new THREE.Mesh(
-        new THREE.ConeGeometry(
-          0.13,
-          0.48,
-          5
-        ),
-        toon(0x7c3aed)
-      );
-
-    feather.rotation.z =
-      -0.35 + i * 0.35;
-
-    feather.position.set(
-      -0.05 + i * 0.12,
-      0.62 + Math.abs(i - 1) * 0.03,
-      0
-    );
-
-    crest.add(feather);
-  }
-
-  bird.add(crest);
-
-  /* WINGS */
-
-  const wingGroup =
-    new THREE.Group();
-
-  const wingShape =
-    new THREE.Mesh(
-      new THREE.SphereGeometry(
-        0.38,
-        10,
-        8
-      ),
-      toon(0x7c3aed)
-    );
-
-  wingShape.scale.set(
-    0.45,
-    1,
-    0.3
-  );
-
-  wingShape.position.set(
-    -0.1,
-    -0.02,
-    0.62
-  );
-
-  wingGroup.add(
-    wingShape
-  );
-
-  bird.add(
-    wingGroup
-  );
-
-  /* SECOND WING */
-
-  const wingBack =
-    new THREE.Mesh(
-      new THREE.SphereGeometry(
-        0.34,
-        10,
-        8
-      ),
-      toon(0x6332c4)
-    );
-
-  wingBack.scale.set(
-    0.4,
-    0.9,
-    0.28
-  );
-
-  wingBack.position.set(
-    -0.2,
-    -0.03,
-    0.25
-  );
-
-  bird.add(
-    wingBack
-  );
-
-  /* TAIL */
-
-  const tail =
-    new THREE.Group();
-
-  for (let i = 0; i < 3; i++) {
-    const feather =
-      new THREE.Mesh(
-        new THREE.ConeGeometry(
-          0.15,
-          0.6,
-          5
-        ),
-        toon(0x7c3aed)
-      );
-
-    feather.rotation.z =
-      Math.PI / 2;
-
-    feather.rotation.y =
-      -0.25 + i * 0.25;
-
-    feather.position.set(
-      -0.68,
-      0.1 + i * 0.13,
-      -0.02
-    );
-
-    tail.add(
-      feather
-    );
-  }
-
-  bird.add(tail);
-
-  /* FEET */
-
-  const footMat =
-    toon(0xffa94d);
-
-  for (let i = 0; i < 2; i++) {
-    const foot =
-      new THREE.Mesh(
-        new THREE.CapsuleGeometry(
-          0.05,
-          0.2,
-          4,
-          6
-        ),
-        footMat
-      );
-
-    foot.rotation.z =
-      Math.PI / 2;
-
-    foot.position.set(
-      -0.18 + i * 0.35,
-      -0.62,
-      0.15
-    );
-
-    bird.add(
-      foot
-    );
-  }
-
-  bird.position.set(
-    -3.5,
-    3,
-    1
-  );
-
-  scene.add(
-    bird
-  );
-
-  /* =========================================================
-     PIPES
-     SIDE VIEW
-  ========================================================= */
-
-  const pipes = [];
-
-  const pipeMat =
-    toon(0x42b94c);
-
-  const pipeDarkMat =
-    toon(0x2f8f3b);
-
-  const pipeLightMat =
-    toon(0x75d86d);
-
-  const PIPE_WIDTH = 1.35;
-  const PIPE_DEPTH = 1.5;
-
-  function makePipe(x) {
-    const gapCenter =
-      2.4 +
-      Math.random() * 2.4;
-
-    const gapHalf =
-      1.45;
-
-    const group =
-      new THREE.Group();
-
-    /*
-       Vertical pipe body
-    */
-
-    const bodyGeo =
-      new THREE.BoxGeometry(
-        PIPE_WIDTH,
-        8,
-        PIPE_DEPTH
-      );
-
-    const capGeo =
-      new THREE.BoxGeometry(
-        1.85,
-        0.7,
-        1.85
-      );
-
-    /* TOP */
-
-    const topBody =
-      new THREE.Mesh(
-        bodyGeo,
-        pipeMat
-      );
-
-    topBody.position.y =
-      gapCenter +
-      gapHalf +
-      4;
-
-    group.add(
-      topBody
-    );
-
-    const topCap =
-      new THREE.Mesh(
-        capGeo,
-        pipeDarkMat
-      );
-
-    topCap.position.y =
-      gapCenter +
-      gapHalf +
-      0.35;
-
-    group.add(
-      topCap
-    );
-
-    /* BOTTOM */
-
-    const bottomBody =
-      new THREE.Mesh(
-        bodyGeo,
-        pipeMat
-      );
-
-    bottomBody.position.y =
-      gapCenter -
-      gapHalf -
-      4;
-
-    group.add(
-      bottomBody
-    );
-
-    const bottomCap =
-      new THREE.Mesh(
-        capGeo,
-        pipeDarkMat
-      );
-
-    bottomCap.position.y =
-      gapCenter -
-      gapHalf -
-      0.35;
-
-    group.add(
-      bottomCap
-    );
-
-    /* HIGHLIGHT */
-
-    const highlightGeo =
-      new THREE.BoxGeometry(
-        0.22,
-        7.6,
-        0.08
-      );
-
-    const topHighlight =
-      new THREE.Mesh(
-        highlightGeo,
-        pipeLightMat
-      );
-
-    topHighlight.position.set(
-      -0.45,
-      0,
-      0.78
-    );
-
-    topBody.add(
-      topHighlight
-    );
-
-    const bottomHighlight =
-      new THREE.Mesh(
-        highlightGeo,
-        pipeLightMat
-      );
-
-    bottomHighlight.position.set(
-      -0.45,
-      0,
-      0.78
-    );
-
-    bottomBody.add(
-      bottomHighlight
-    );
-
-    /* CAP HIGHLIGHTS */
-
-    const capLineGeo =
-      new THREE.BoxGeometry(
-        1.55,
-        0.12,
-        0.08
-      );
-
-    const capLineTop =
-      new THREE.Mesh(
-        capLineGeo,
-        pipeLightMat
-      );
-
-    capLineTop.position.set(
-      -0.1,
-      0,
-      0.94
-    );
-
-    topCap.add(
-      capLineTop
-    );
-
-    const capLineBottom =
-      new THREE.Mesh(
-        capLineGeo,
-        pipeLightMat
-      );
-
-    capLineBottom.position.set(
-      -0.1,
-      0,
-      0.94
-    );
-
-    bottomCap.add(
-      capLineBottom
-    );
-
-    /*
-       Position:
-       X = horizontal scrolling
-    */
-
-    group.position.set(
-      x,
-      0,
-      0
-    );
-
-    group.userData.gapCenter =
-      gapCenter;
-
-    group.userData.gapHalf =
-      gapHalf;
-
-    group.userData.passed =
-      false;
-
-    scene.add(
-      group
-    );
-
-    pipes.push(
-      group
-    );
-  }
-
-  /* =========================================================
-     GAME STATE
-  ========================================================= */
-
-  let started = false;
-  let running = false;
-  let over = false;
-
-  let score = 0;
-  let hp = 3;
-
-  let birdY = 3;
-  let velocityY = 0;
-
-  let invincible = 0;
-  let elapsed = 0;
-
-  let pipeTimer = 0;
-
-  const hudScore =
-    scoreEl || {
-      textContent: ""
-    };
-
-  const hudHp =
-    hpEl || {
-      textContent: ""
-    };
-
-  /* =========================================================
-     GAME OVER OVERLAY
-  ========================================================= */
-
-  const overlay =
-    document.createElement(
-      "div"
-    );
-
-  overlay.className =
-    "game-overlay";
-
-  overlay.innerHTML =
-    `
-      <h4>GAME OVER</h4>
-      <p>
-        SCORE: 0<br>
-        TEKAN [R] / KLIK UNTUK ULANG
-      </p>
-    `;
-
-  wrap.appendChild(
-    overlay
-  );
-
-  const overlayText =
-    overlay.querySelector(
-      "p"
-    );
-
-  /* =========================================================
-     HUD
-  ========================================================= */
-
-  function updateHud() {
-    hudScore.textContent =
-      String(score).padStart(
-        6,
-        "0"
-      );
-
-    hudHp.textContent =
-      "♥".repeat(hp) +
-      "♡".repeat(3 - hp);
-  }
-
-  /* =========================================================
-     GAME RESET
-  ========================================================= */
-
-  function restart() {
-    over = false;
-    running = false;
-
-    score = 0;
-    hp = 3;
-
-    birdY = 3;
-    velocityY = 0;
-
-    invincible = 0;
-    pipeTimer = 0;
-
-    pipes.forEach(
-      (pipe) => {
-        scene.remove(pipe);
-      }
-    );
-
-    pipes.length = 0;
-
-    bird.position.set(
-      -3.5,
-      3,
-      1
-    );
-
-    bird.rotation.z = 0;
-
-    overlay.classList.remove(
-      "show"
-    );
-
-    updateHud();
-
-    bird.visible = true;
-  }
-
-  /* =========================================================
-     FLAP
-  ========================================================= */
-
-  function flap() {
-    if (!started) return;
-
-    if (over) return;
-
-    running = true;
-
-    velocityY = 6.6;
-  }
-
-  /* =========================================================
-     INPUT
-  ========================================================= */
-
-  wrap.addEventListener(
-    "click",
-    () => {
-      if (over) {
-        restart();
-      } else {
-        flap();
-      }
-    }
-  );
-
-  document.addEventListener(
-    "keydown",
-    (e) => {
-      if (!started) return;
-      if (document.getElementById("zoomModal").classList.contains("show")) return;
-      if (document.getElementById("galleryModal").classList.contains("show")) return;
-
-      if (
-        e.key === " " ||
-        e.key === "w" ||
-        e.key === "W" ||
-        e.key === "ArrowUp"
-      ) {
-        e.preventDefault();
-
-        if (over) {
-          restart();
-        } else {
-          flap();
-        }
-      }
-
-      if (
-        e.key === "r" ||
-        e.key === "R"
-      ) {
-        restart();
-      }
-    }
-  );
-
-  window.addEventListener(
-    "game-start",
-    () => {
-      started = true;
-      restart();
-    }
-  );
-
-  /* =========================================================
-     DAMAGE
-  ========================================================= */
-
-  function damage() {
-    if (invincible > 0)
-      return;
-
-    hp--;
-
-    invincible = 1.35;
-
-    updateHud();
-
-    if (hp <= 0) {
-      die();
-    }
-  }
-
-  /* =========================================================
-     GAME OVER
-  ========================================================= */
-
-  function die() {
-    over = true;
-    running = false;
-
-    overlayText.innerHTML =
-      `
-        SCORE: ${score}<br>
-        TEKAN [R] / KLIK UNTUK ULANG
-      `;
-
-    overlay.classList.add(
-      "show"
-    );
-
-    velocityY = -2;
-
-    bird.rotation.z =
-      -Math.PI * 0.45;
-  }
-
-  /* =========================================================
-     RESIZE
-  ========================================================= */
-
+  wrap.addEventListener("click", function () {
+    reaction = 1;
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (document.getElementById("zoomModal").classList.contains("show")) return;
+    if (document.getElementById("galleryModal").classList.contains("show")) return;
+    if (e.key === " " || e.key === "Enter") reaction = 1;
+  });
+
+  let last = performance.now();
   function resize() {
-    const w =
-      wrap.clientWidth || 800;
-
-    const h =
-      wrap.clientHeight || 500;
-
-    renderer.setSize(
-      w,
-      h,
-      false
-    );
-
-    camera.aspect =
-      w / h;
-
+    const w = wrap.clientWidth;
+    const h = wrap.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }
 
-  /* =========================================================
-     COLLISION
-  ========================================================= */
-
-  function checkPipeCollision() {
-    const birdX =
-      bird.position.x;
-
-    const birdHalfX =
-      0.62;
-
-    const birdTop =
-      birdY + 0.48;
-
-    const birdBottom =
-      birdY - 0.48;
-
-    for (const pipe of pipes) {
-      const pipeLeft =
-        pipe.position.x -
-        0.95;
-
-      const pipeRight =
-        pipe.position.x +
-        0.95;
-
-      /*
-         Horizontal overlap
-      */
-
-      if (
-        birdX + birdHalfX >
-          pipeLeft &&
-        birdX - birdHalfX <
-          pipeRight
-      ) {
-        const gapCenter =
-          pipe.userData.gapCenter;
-
-        const gapHalf =
-          pipe.userData.gapHalf;
-
-        const gapTop =
-          gapCenter +
-          gapHalf;
-
-        const gapBottom =
-          gapCenter -
-          gapHalf;
-
-        /*
-           Hit top or bottom pipe
-        */
-
-        if (
-          birdTop > gapTop ||
-          birdBottom < gapBottom
-        ) {
-          damage();
-
-          velocityY =
-            Math.min(
-              velocityY,
-              -2.5
-            );
-
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  /* =========================================================
-     PARTICLES
-  ========================================================= */
-
-  const particles = [];
-
-  function spawnParticle() {
-    const p =
-      new THREE.Mesh(
-        new THREE.SphereGeometry(
-          0.045,
-          5,
-          5
-        ),
-        toon(0xffffff)
-      );
-
-    p.position.set(
-      bird.position.x -
-        0.65,
-      bird.position.y +
-        (Math.random() - 0.5) *
-          0.5,
-      bird.position.z -
-        0.1
-    );
-
-    p.userData.life =
-      0.5;
-
-    p.userData.vx =
-      -1.2 -
-      Math.random() *
-        1.4;
-
-    p.userData.vy =
-      (Math.random() - 0.5) *
-      1.5;
-
-    scene.add(p);
-
-    particles.push(p);
-  }
-
-  function updateParticles(dt) {
-    for (
-      let i = particles.length - 1;
-      i >= 0;
-      i--
-    ) {
-      const p =
-        particles[i];
-
-      p.userData.life -= dt;
-
-      p.position.x +=
-        p.userData.vx * dt;
-
-      p.position.y +=
-        p.userData.vy * dt;
-
-      p.scale.multiplyScalar(
-        0.96
-      );
-
-      if (
-        p.userData.life <= 0
-      ) {
-        scene.remove(p);
-
-        particles.splice(
-          i,
-          1
-        );
-      }
-    }
-  }
-
-  /* =========================================================
-     ANIMATION
-  ========================================================= */
-
-  let last =
-    performance.now();
-
   function animate(now) {
-    requestAnimationFrame(
-      animate
-    );
-
-    const dt =
-      Math.min(
-        (now - last) / 1000,
-        0.05
-      );
-
+    requestAnimationFrame(animate);
+    const dt = Math.min((now - last) / 1000, 0.05);
     last = now;
+    const t = now / 1000;
 
-    elapsed += dt;
+    look.yaw += (target.x * 0.45 - look.yaw) * Math.min(0.08, dt * 3);
+    look.pitch += (-target.y * 0.35 - look.pitch) * Math.min(0.08, dt * 3);
+    hero.rotation.y = look.yaw;
+    hero.rotation.x = look.pitch;
+    hero.rotation.z = target.x * 0.03 + (reaction ? 0.1 : 0);
 
-    /* -----------------------------------------
-       CLOUD MOVEMENT
-    ----------------------------------------- */
+    /* idle squash & stretch */
+    const breathe = Math.sin(t * 2.1) * 0.02;
+    body.scale.set(1 - breathe * 0.5, 1 + breathe, 1 - breathe * 0.5);
 
-    clouds.forEach(
-      (cloud) => {
-        cloud.position.x +=
-          cloud.userData.speed *
-          dt;
+    hero.position.y = 0.55 + Math.sin(t * 1.4) * 0.05 + reaction * 0.35;
 
-        if (
-          cloud.position.x >
-          21
-        ) {
-          cloud.position.x =
-            -21;
-        }
-      }
-    );
+    eyeL.position.x = -0.27 + target.x * 0.02;
+    eyeL.position.y = 0.17 + target.y * 0.015;
+    eyeR.position.x = 0.27 + target.x * 0.02;
+    eyeR.position.y = 0.17 + target.y * 0.015;
 
-    /* -----------------------------------------
-       PARTICLES
-    ----------------------------------------- */
-
-    updateParticles(dt);
-
-    /* -----------------------------------------
-       GAME
-    ----------------------------------------- */
-
-    if (started) {
-      if (
-        running &&
-        !over
-      ) {
-        /* ================================
-           BIRD PHYSICS
-        ================================= */
-
-        velocityY -=
-          14 * dt;
-
-        velocityY =
-          Math.max(
-            velocityY,
-            -10
-          );
-
-        birdY +=
-          velocityY * dt;
-
-        /* ================================
-           PIPE SPAWN
-        ================================= */
-
-        pipeTimer += dt;
-
-        if (
-          pipeTimer >
-          1.65
-        ) {
-          makePipe(12);
-
-          pipeTimer = 0;
-        }
-
-        /* ================================
-           PIPE SPEED
-        ================================= */
-
-        const pipeSpeed =
-          4.2 +
-          Math.min(
-            score * 0.035,
-            2
-          );
-
-        /* ================================
-           PIPE MOVEMENT
-        ================================= */
-
-        for (
-          let i = pipes.length - 1;
-          i >= 0;
-          i--
-        ) {
-          const pipe =
-            pipes[i];
-
-          pipe.position.x -=
-            pipeSpeed * dt;
-
-          /* SCORE */
-
-          if (
-            !pipe.userData.passed &&
-            pipe.position.x <
-              bird.position.x -
-                0.8
-          ) {
-            pipe.userData.passed =
-              true;
-
-            score++;
-
-            updateHud();
-
-            /*
-               small celebration
-            */
-
-            for (
-              let j = 0;
-              j < 4;
-              j++
-            ) {
-              spawnParticle();
-            }
-          }
-
-          /* REMOVE */
-
-          if (
-            pipe.position.x <
-            -14
-          ) {
-            scene.remove(
-              pipe
-            );
-
-            pipes.splice(
-              i,
-              1
-            );
-          }
-        }
-
-        /* ================================
-           GROUND
-        ================================= */
-
-        if (
-          birdY <
-          0.52
-        ) {
-          birdY =
-            0.52;
-
-          damage();
-
-          velocityY =
-            4.2;
-        }
-
-        /* ================================
-           CEILING
-        ================================= */
-
-        if (
-          birdY >
-          7.8
-        ) {
-          birdY =
-            7.8;
-
-          velocityY =
-            -1;
-        }
-
-        /* ================================
-           PIPE COLLISION
-        ================================= */
-
-        if (!over) {
-          checkPipeCollision();
-        }
-
-        /* ================================
-           BIRD ROTATION
-        ================================= */
-
-        const targetRotation =
-          THREE.MathUtils.clamp(
-            velocityY * 0.075,
-            -0.55,
-            0.55
-          );
-
-        bird.rotation.z +=
-          (
-            targetRotation -
-            bird.rotation.z
-          ) *
-          0.14;
-
-        /* ================================
-           TRAIL
-        ================================= */
-
-        if (
-          Math.random() <
-          0.18
-        ) {
-          spawnParticle();
-        }
-      }
-
-      /* -----------------------------------
-         READY STATE
-      ----------------------------------- */
-
-      else if (
-        !running &&
-        !over
-      ) {
-        birdY =
-          3 +
-          Math.sin(
-            elapsed * 2.6
-          ) *
-            0.2;
-
-        bird.rotation.z =
-          Math.sin(
-            elapsed * 2.6
-          ) *
-            0.05;
-      }
-
-      /* -----------------------------------
-         GAME OVER FALL
-      ----------------------------------- */
-
-      else if (over) {
-        velocityY -=
-          14 * dt;
-
-        birdY +=
-          velocityY * dt;
-
-        if (
-          birdY <
-          0.55
-        ) {
-          birdY =
-            0.55;
-        }
-
-        bird.rotation.z -=
-          2.2 * dt;
-      }
-
-      bird.position.y =
-        birdY;
+    blinkT -= dt;
+    if (blinkT <= 0) {
+      blinkAt = 2.5 + Math.random() * 2.5;
+      blinkT = blinkAt;
     }
+    const blinkPhase = blinkT > blinkAt - 0.09 ? blinkT - (blinkAt - 0.09) : 1;
+    const squash = blinkPhase < 0.09 ? Math.abs(Math.sin((blinkPhase / 0.09) * Math.PI)) : 1;
+    blinkEyes.forEach(function (e) { e.scale.set(1, squash, 1); });
 
-    /* =======================================================
-       WING ANIMATION
-    ======================================================= */
+    reaction = Math.max(0, reaction - dt * 1.2);
+    armL.rotation.z = 0.25 - reaction * 0.5;
+    armR.rotation.z = -0.25 + reaction * 0.5;
 
-    const wingSpeed =
-      running && !over
-        ? 18
-        : 3;
+    starBig.rotation.z += dt * 0.6;
+    starSmall.rotation.z -= dt * 0.45;
+    starBig.position.y = 0.75 + Math.sin(t * 1.6) * 0.06;
+    starSmall.position.y = 1.05 + Math.cos(t * 1.3) * 0.05;
 
-    const wingAngle =
-      Math.sin(
-        elapsed *
-          wingSpeed
-      ) * 0.5;
+    sparkles.forEach(function (s, i) {
+      s.position.x += Math.sin(t * 0.6 + i) * 0.0008;
+      s.position.y += Math.sin(t * 0.9 + i * 1.7) * 0.0009;
+      s.rotation.z += 0.01;
+    });
 
-    wingGroup.rotation.z =
-      wingAngle;
-
-    wingBack.rotation.z =
-      -wingAngle * 0.7;
-
-    /* =======================================================
-       BIRD BLINK
-    ======================================================= */
-
-    if (
-      running &&
-      !over &&
-      Math.sin(elapsed * 2.7) >
-        0.98
-    ) {
-      face.scale.y = 0.75;
-    } else {
-      face.scale.y = 1;
-    }
-
-    /* =======================================================
-       INVINCIBILITY FLASH
-    ======================================================= */
-
-    invincible =
-      Math.max(
-        0,
-        invincible - dt
-      );
-
-    if (
-      invincible > 0
-    ) {
-      bird.visible =
-        Math.floor(
-          invincible * 12
-        ) %
-          2 ===
-        0;
-    } else {
-      bird.visible = true;
-    }
-
-    /* =======================================================
-       PARALLAX
-    ======================================================= */
-
-    mountains.position.x =
-      Math.sin(
-        elapsed * 0.08
-      ) *
-      0.2;
-
-    /* =======================================================
-       RENDER
-    ======================================================= */
-
-    renderer.render(
-      scene,
-      camera
-    );
+    renderer.render(scene, camera);
   }
-
-  /* =========================================================
-     START
-  ========================================================= */
 
   resize();
-
-  window.addEventListener(
-    "resize",
-    resize
-  );
-
-  updateHud();
-
-  requestAnimationFrame(
-    animate
-  );
+  window.addEventListener("resize", resize);
+  requestAnimationFrame(animate);
 })();

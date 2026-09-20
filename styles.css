@@ -122,51 +122,10 @@ a { color: inherit; text-decoration: none; }
   margin: 0 auto;
   aspect-ratio: 3 / 4;
   position: relative;
-  background: #0d0618;
-  border: 3px solid var(--black);
-  box-shadow: 0 6px 0 var(--black), 0 0 0 4px var(--primary-strong);
+  background: radial-gradient(60% 55% at 50% 45%, rgba(124, 58, 237, 0.22), transparent 72%);
 }
-.game-tag {
-  position: absolute;
-  top: -38px; left: -3px;
-  background: var(--yellow);
-  color: var(--black);
-  font-family: var(--pixel);
-  font-size: 8px;
-  padding: 6px 8px;
-  border: 3px solid var(--black);
-  z-index: 6;
-}
-.game-hint {
-  position: absolute;
-  bottom: -34px; left: -3px;
-  background: var(--black);
-  color: var(--primary);
-  font-family: var(--pixel);
-  font-size: 8px;
-  padding: 6px 8px;
-  border: 3px solid var(--black);
-  z-index: 6;
-}
-#hero3d { position: absolute; inset: 0; cursor: crosshair; }
+#hero3d { position: absolute; inset: 0; cursor: grab; }
 #hero3d canvas { width: 100% !important; height: 100% !important; }
-
-.game-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  text-align: center;
-  background: rgba(10, 4, 20, 0.78);
-  pointer-events: none;
-}
-.game-overlay.show { display: flex; }
-.game-overlay h4 { font-family: var(--pixel); font-size: 26px; color: var(--danger); text-shadow: 3px 3px 0 var(--black); }
-.game-overlay p { font-family: var(--pixel); font-size: 10px; color: var(--yellow); line-height: 1.9; }
 
 .hero-inner { position: relative; z-index: 4; }
 .hero-copy { max-width: 620px; }
